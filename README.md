@@ -23,6 +23,7 @@ Repeat the following (end by pressing "stop" on the popup screen or "Cancel" on 
 
 ## Author
 [ShakaSeYuki](https://github.com/ShakaSeYuki)
-
+[Twitter](https://twitter.com/ShakaSeYuki)
+[Blog](https://mac-like.com/)
 ## Release Note
 2019/09/01 ver.1.0.0
