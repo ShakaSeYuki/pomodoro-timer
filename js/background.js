@@ -89,7 +89,6 @@
     pomodoroStop = () => {
         if(tid !== null) {
             clearTimeout(tid);
-            setStopAction();
             tid = null;
         }
     }

@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "ポモドーロタイマー(Pomodoro Timer)",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "ポモドーロテクニックを使いたい方向けタイマーです。設定時間毎に確認画面が表示されます。",
     "icons": {
         "16": "img/icon16.png",

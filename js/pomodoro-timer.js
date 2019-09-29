@@ -40,4 +40,5 @@
     stopTimer.addEventListener('click', event => {
         stopTimerFlg = true;
         bgWindow.pomodoroStop();
+        bgWindow.setStopAction();
     });
