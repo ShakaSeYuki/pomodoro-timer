@@ -13,19 +13,19 @@
         <div class="pomodoro_text">
             <p id="pomodoroDate"></p>
         </div>
-        <div>
+        <div class="pomodoro_tc">
             <div class="pomodoro_time">
                 <label>作業時間(分)</label>
                 <input type="number" name="workingTime" value="25" id="pomodoroWorking" min="1" max="1440" required>
             </div>
-            <div class="pomodoro_time">
+            <div class="pomodoro_time pomodoro_ml">
                 <label>休憩時間(分)</label>
                 <input type="number" name="breakTime" value="5" id="pomodoroBreak" min="1" max="1440" required>
             </div>
         </div>
-        <div>
-            <input type="submit" name="startButton" value="start" id="pomodoroStart" class="pomodoroStart pomodoro_btn">
-            <input type="submit" name="stopButton" value="stop" id="pomodoroStop" class="pomodoroStop pomodoro_btn">
+        <div class="pomodoro_tc">
+            <input type="submit" name="startButton" value="▶︎ START" id="pomodoroStart" class="pomodoro_start pomodoro_btn">
+            <input type="submit" name="stopButton" value="■ STOP" id="pomodoroStop" class="pomodoro_stop pomodoro_btn pomodoro_ml">
         </div>
     </div>
     <script src="js/pomodoro-timer.js"></script>
