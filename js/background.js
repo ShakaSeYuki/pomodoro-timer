@@ -4,7 +4,7 @@
     let breakMin = 5;
     let workingCount = 1;
     let breakCount = 1;
-    let timerMsg = 'startを押すと作業開始です。';
+    let timerMsg = 'STARTを押すと作業開始です。';
 
     // ポモドーロタイマーの設定
     function PomodoroTimer(elment, pomodoroTime, message) {
