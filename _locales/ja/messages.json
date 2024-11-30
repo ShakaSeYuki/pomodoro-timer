@@ -1,0 +1,47 @@
+{
+  "extensionName": {
+    "message": "ポモドーロタイマー(Pomodoro Timer)"
+  },
+  "extensionDescription": {
+    "message": "ポモドーロテクニックを使いたい方向けタイマーです。設定時間毎に通知画面が表示されます。"
+  },
+  "actionTitle": {
+    "message": "ポモドーロタイマー"
+  },
+  "initMessage": {
+    "message": "STARTを押すと作業開始です。"
+  },
+  "pomodoroWorkTime": {
+    "message": "作業時間(分)"
+  },
+  "pomodoroBreakTime": {
+    "message": "休憩時間(分)"
+  },
+  "workText": {
+    "message": "作業終了まで："
+  },
+  "workNotificationText": {
+    "message": "作業が終了しました。OKボタンを押して休憩を開始しましょう。"
+  },
+  "breakText": {
+    "message": "休憩終了まで："
+  },
+  "breakNotificationText": {
+    "message": "休憩が終了しました。OKボタンを押して作業を開始しましょう。"
+  },
+  "finishText": {
+    "message": "停止しました。"
+  },
+  "finishButton": {
+    "message": "ポモドーロタイマーを終了"
+  },
+  "hour": {
+    "message": "時間"
+  },
+  "minutes": {
+    "message": "分"
+  },
+  "seconds": {
+    "message": "秒"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "extensionName": {
+    "message": "Pomodoro Timer"
+  },
+  "extensionDescription": {
+    "message": "This is a timer for those who want to use the Pomodoro Technique. A notification screen will be displayed at the end of the set time."
+  },
+  "actionTitle": {
+    "message": "Pomodoro Timer"
+  },
+  "initMessage": {
+    "message": "Press START to begin your work."
+  },
+  "pomodoroWorkTime": {
+    "message": "Work Time (minutes)"
+  },
+  "pomodoroBreakTime": {
+    "message": "Break Time (minutes)"
+  },
+  "workText": {
+    "message": "Time until the end of work:"
+  },
+  "workNotificationText": {
+    "message": "Work session has ended. Press the OK button to start your break."
+  },
+  "breakText": {
+    "message": "Time until the end of break:"
+  },
+  "breakNotificationText": {
+    "message": "Break has ended. Press the OK button to start your work session."
+  },
+  "finishText": {
+    "message": "Stopped."
+  },
+  "finishButton": {
+    "message": "End Pomodoro Timer"
+  },
+  "hour": {
+    "message": "Hour"
+  },
+  "minutes": {
+    "message": "Minutes"
+  },
+  "seconds": {
+    "message": "Seconds"
+  }
+}

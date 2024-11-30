@@ -1,4 +1,6 @@
 // 初期化
+const actionTitle = chrome.i18n.getMessage('actionTitle');
+const initMessage = chrome.i18n.getMessage('initMessage');
 let tid = null;
 let workingFlg = true;
 let stopTimerFlg = false;
@@ -11,7 +13,7 @@ let workingMin = 25;
 let breakMin = 5;
 let workingCount = 1;
 let breakCount = 1;
-let timerMsg = initMsg;
+let timerMsg = initMessage;
 const secondTime = 60;
 
 async function startAlarm(name, duration) {
@@ -24,7 +26,7 @@ function updateTimerDisplay() {
         if (timerMsg) {
             dateInfo.innerHTML = timerMsg;
         } else {
-            dateInfo.innerHTML = "タイマーは開始されていません";
+            dateInfo.innerHTML = initMessage;
         }
     }
 }
@@ -41,6 +43,9 @@ function initializeAlarmListener() {
 
 // 初期化時にタイマー表示を呼び出し
 window.addEventListener("DOMContentLoaded", function () {
+    document.getElementById('pomodoroName').innerText = chrome.i18n.getMessage('actionTitle');
+    document.getElementById('pomodoroWorkTime').innerText = chrome.i18n.getMessage('pomodoroWorkTime');
+    document.getElementById('pomodoroBreakTime').innerText = chrome.i18n.getMessage('pomodoroBreakTime');
     // タイマーリスナーを初期化
     initializeAlarmListener();
     // 初回のタイマー表示更新
@@ -81,8 +86,8 @@ pomodoroStart = (_wmin, _bmin, workingFlg) => {
         ({ working_count, working_time, break_count, break_time }) => {
             const min = workingFlg ? working_time : break_time;
             const count = workingFlg ? working_count : break_count;
-            const startText = `${count}回目の${workingFlg ? "作業" : "休憩"}終了まで:`;
-            const endText = `${count}回目の${workingFlg ? "作業" : "休憩"}が終了しました。OKボタンを押して${workingFlg ? "休憩" : "作業"}を開始しましょう。`;
+            const startText = workingFlg ? chrome.i18n.getMessage('workText') : chrome.i18n.getMessage('breakText');
+            const endText = workingFlg ? chrome.i18n.getMessage('workNotificationText') : chrome.i18n.getMessage('breakNotificationText');
             // タイマーの終了時間を計算
             const pomodoroTime = new Date(Math.ceil((Date.now() + min * 60 * 1000) / 1000) * 1000);
             // PomodoroTimer インスタンスを生成してカウントダウンを開始
@@ -110,7 +115,7 @@ pomodoroStop = () => {
 
 function setStopAction() {
     stopTimerFlg = true; // 停止フラグをオン
-    timerMsg = "停止しました。";
+    timerMsg = chrome.i18n.getMessage('finishText');
     chrome.alarms.clearAll(() => {
         console.log("全てのタイマーが停止されました");
     });
@@ -154,10 +159,10 @@ const PomodoroTimer = class {
 
             // 表示用のメッセージを生成
             if (hour > 0) {
-                timerMsg += `<span class="pomodoro_num">${hour}</span><small>時間</small>`;
+                timerMsg += `<span class="pomodoro_num">${hour}</span><small>${chrome.i18n.getMessage('hour')}</small>`;
             }
-            timerMsg += `<span class="pomodoro_num">${this.addZero(min)}</span><small>分</small>`;
-            timerMsg += `<span class="pomodoro_num">${this.addZero(sec)}</span><small>秒</small>`;
+            timerMsg += `<span class="pomodoro_num">${this.addZero(min)}</span><small>${chrome.i18n.getMessage('minutes')}</small>`;
+            timerMsg += `<span class="pomodoro_num">${this.addZero(sec)}</span><small>${chrome.i18n.getMessage('seconds')}</small>`;
 
             // 表示を更新
             updateTimerDisplay();
@@ -171,11 +176,11 @@ const PomodoroTimer = class {
                 chrome.notifications.create("pomodoro_timer", {
                     type: "basic",
                     iconUrl: "img/icon48.png",
-                    title: "タイマー終了",
+                    title: chrome.i18n.getMessage("actionTitle"),
                     message: this.endMsg,
                     buttons: [
                         { title: "OK" },
-                        { title: "ポモドーロタイマーを終了" }
+                        { title: chrome.i18n.getMessage("finishButton") }
                     ],
                     priority: 2,
                 }, (notificationId) => {

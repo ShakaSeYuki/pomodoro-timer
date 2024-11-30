@@ -1,8 +1,9 @@
 {
     "manifest_version": 3,
-    "name": "ポモドーロタイマー(Pomodoro Timer)",
-    "version": "2.0.1",
-    "description": "ポモドーロテクニックを使いたい方向けタイマーです。設定時間毎に通知画面が表示されます。",
+    "name": "__MSG_extensionName__",
+    "version": "2.0.2",
+    "default_locale": "ja",
+    "description": "__MSG_extensionDescription__",
     "icons": {
         "16": "img/icon16.png",
         "48": "img/icon48.png",
@@ -12,7 +13,7 @@
         "default_icon": {
             "19": "img/icon19.png"
         },
-        "default_title": "ポモドーロタイマー",
+        "default_title": "__MSG_actionTitle__",
         "default_popup": "pomodoro-timer.html"
     },
     "background": {

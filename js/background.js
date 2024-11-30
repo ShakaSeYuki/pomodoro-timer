@@ -1,7 +1,9 @@
 let lifeline;
 let stopId;
+const title = chrome.i18n.getMessage("actionTitle");
+const workNotificationText = chrome.i18n.getMessage("workNotificationText");
 
-async function startAlarm(name, duration) {
+async function startAlarm(name, _duration) {
     await chrome.alarms.create(name, { delayInMinutes: 0.01 });
 }
 
@@ -62,7 +64,7 @@ function showNotification(title, message, alarmName, delayInMinutes, current_pha
         message: message,
         buttons: [
             { title: "OK" },
-            { title: "ポモドーロタイマーを終了" }
+            { title: chrome.i18n.getMessage("finishButton") }
         ],
         priority: 2,
     }, (notificationId) => {
@@ -102,8 +104,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === "pomodoro_working") {
         chrome.alarms.clearAll(() => {
             showNotification(
-                "ポモドーロタイマー",
-                `${data.working_time}分の作業が終了しました。OKボタンを押して休憩を開始しましょう。`,
+                title,
+                chrome.i18n.getMessage("workNotificationText"),
                 "pomodoro_break",
                 data.break_time,
                 "break"
@@ -112,8 +114,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     } else if (alarm.name === "pomodoro_break") {
         chrome.alarms.clearAll(() => {
             showNotification(
-                "ポモドーロタイマー",
-                `${data.break_time}分の休憩が終了しました。OKボタンを押して作業を開始しましょう。`,
+                title,
+                chrome.i18n.getMessage("breakNotificationText"),
                 "pomodoro_working",
                 data.working_time,
                 "working"
