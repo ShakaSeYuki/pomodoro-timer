@@ -1,114 +1,123 @@
-    // 初期化
-    let tid = null;
-    let workingMin = 25;
-    let breakMin = 5;
-    let workingCount = 1;
-    let breakCount = 1;
-    let timerMsg = 'STARTを押すと作業開始です。';
+let lifeline;
+let stopId;
 
-    // ポモドーロタイマーの設定
-    function PomodoroTimer(elment, pomodoroTime, message) {
-        this.initialize.apply(this, arguments);
+async function startAlarm(name, duration) {
+    await chrome.alarms.create(name, { delayInMinutes: 0.01 });
+}
+
+//start・stopボタン押された時の処理
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message.switch === "on") {
+        const workingTime = message.working_time || 25; // 作業時間 (分)
+        const breakTime = message.break_time || 5; // 休憩時間 (分)
+        chrome.alarms.create("pomodoro_working", { delayInMinutes: workingTime });
+        chrome.storage.local.set({
+            timerStatus: true,
+            working_time: workingTime,
+            break_time: breakTime,
+            current_phase: "working", // 作業フェーズ
+        });
+        sendResponse({ status: "タイマーが開始されました" });
+    } else if (message.switch === "stop" || message.switch === "reset") {
+        chrome.alarms.clearAll(() => {
+            chrome.storage.local.set({ timerStatus: false });
+            sendResponse({ status: "タイマーが停止されました" });
+        });
     }
+    return true; // 非同期応答のためにメッセージチャネルを維持
+});
 
-    PomodoroTimer.prototype = {
-        // 初期化
-        initialize: function (elment, pomodoroTime, message) {
-            this.elem = elment;
-            this.pomodoroTime = pomodoroTime;
-            this.message = message;
-        },
-        countDown: function (workingFlg) {
-            pomodoroStop();
-            timerMsg = '';
-            let today = new Date();
-            let day = Math.floor((this.pomodoroTime - today) / (24 * 60 * 60 * 1000));
-            let hour = Math.floor((day * 24) + ((this.pomodoroTime - today) % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
-            let min = Math.floor(((this.pomodoroTime - today) % (24 * 60 * 60 * 1000)) / (60 * 1000)) % 60;
-            let sec = Math.floor(((this.pomodoroTime - today) % (24 * 60 * 60 * 1000)) / 1000) % 60 % 60;
-            let pt = this;
-            if ((this.pomodoroTime - today) > 0) {
-                if (hour) timerMsg += '<span class="pomodoro_num">' + hour + '</span><small>時間</small>';
-                timerMsg += '<span class="pomodoro_num">' + this.addZero(min) + '</span><small>分</small><span class="pomodoro_num">' + this.addZero(sec) + '</span><small>秒</small>';
-                timerMsg = this.elem + timerMsg;
-                dispTimer();
-                tid = setTimeout(() => {
-                    pt.countDown(workingFlg);
-                }, 10);
-            } else {
-                if(workingFlg) {
-                    if(confirm(this.message)) {
-                        workingFlg = false;
-                        workingCount++;
-                        pomodoroStart(workingMin, breakMin, workingFlg);
-                    } else {
-                        setStopAction();
-                    }
-                } else {
-                    if(confirm(this.message)) {
-                        workingFlg = true;
-                        breakCount++;
-                        pomodoroStart(workingMin, breakMin, workingFlg);
-                    } else {
-                        setStopAction();
+//5分間の再接続処理
+chrome.runtime.onConnect.addListener((port) => {
+    if (port.name === 'keepAlive') {
+        lifeline = port;
+        // 切断時の処理
+        port.onDisconnect.addListener(() => {
+            keepAlive(true);
+        });
+    }
+});
+
+const keepAlive = (forced = false) => {
+    let lifeline;
+    if (lifeline && !forced) {
+        return; // すでに接続が存在する場合、再接続しない
+    }
+    try {
+        lifeline = chrome.runtime.connect({ name: 'keepAlive' });
+        lifeline.onDisconnect.addListener(() => {
+            keepAlive(true);
+        });
+    } catch (error) {
+        console.error("keepAlive 接続中にエラーが発生しました:", error);
+    }
+};
+
+// 通知を表示する関数
+function showNotification(title, message, alarmName, delayInMinutes, current_phase) {
+    chrome.notifications.create("pomodoro_timer", {
+        type: "basic",
+        iconUrl: "/img/icon48.png",
+        title: title,
+        message: message,
+        buttons: [
+            { title: "OK" },
+            { title: "ポモドーロタイマーを終了" }
+        ],
+        priority: 2,
+    }, (notificationId) => {
+        if (chrome.runtime.lastError) {
+            console.error("通知作成エラー:", chrome.runtime.lastError.message);
+        } else {
+            chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
+                if (notifId === notificationId) {
+                    if (btnIdx === 0) {
+                        // 次のサイクルを開始
+                        chrome.alarms.create(alarmName, { delayInMinutes: delayInMinutes });
+                        chrome.storage.local.set({ current_phase: current_phase });
+                    } else if (btnIdx === 1) {
+                        stopPomodoroTimer();
                     }
                 }
-                return;
-            }
-        },
-        addZero: function (num) {
-            return ('0' + num).slice(-2);
+            });
         }
-    }
+    });
+}
 
-    // スタート
-    pomodoroStart = (wmin, bmin, workingFlg) => {
-        let min;
-        let text;
-        let endText;
-        workingMin = (!wmin) ? workingMin: wmin;
-        breakMin = (!bmin) ? breakMin: bmin;
-        // 作業か休憩かの判別
-        if (workingFlg) {
-            min = workingMin;
-            text = workingCount + '回目の作業終了まで：';
-            endText = workingCount + '回目の作業が終了しました。OKボタンを押して休憩しましょう。\nポモドーロタイマーを終了したい場合は\nキャンセルボタンを押してください。';
-        } else if (!workingFlg) {
-            min = breakMin;
-            text = breakCount + '回目の休憩終了まで：';
-            endText = breakCount + '回目の休憩が終了しました。OKボタンを押して作業を開始しましょう。\nポモドーロタイマーを終了したい場合は\nキャンセルボタンを押してください。';
-        }
-        // 時間をセット
-        let pomodoroTime = new Date();
-        pomodoroTime.setMinutes(pomodoroTime.getMinutes() + Number(min));
-        let timer = new PomodoroTimer(text, pomodoroTime, endText);
-        timer.countDown(workingFlg);
-    }
+// タイマーの停止
+function stopPomodoroTimer() {
+    chrome.alarms.clearAll(() => {
+        console.log("全てのタイマーが停止されました");
+    });
+    chrome.storage.local.set({
+        timerStatus: false,
+        current_phase: null,
+        working_count: 1,
+        break_count: 1,
+    });
+}
 
-    // タイマーの停止
-    pomodoroStop = () => {
-        if(tid !== null) {
-            clearTimeout(tid);
-            tid = null;
-        }
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+    const data = await chrome.storage.local.get(["working_time", "break_time", "current_phase"]);
+    if (alarm.name === "pomodoro_working") {
+        chrome.alarms.clearAll(() => {
+            showNotification(
+                "ポモドーロタイマー",
+                `${data.working_time}分の作業が終了しました。OKボタンを押して休憩を開始しましょう。`,
+                "pomodoro_break",
+                data.break_time,
+                "break"
+            );
+        });
+    } else if (alarm.name === "pomodoro_break") {
+        chrome.alarms.clearAll(() => {
+            showNotification(
+                "ポモドーロタイマー",
+                `${data.break_time}分の休憩が終了しました。OKボタンを押して作業を開始しましょう。`,
+                "pomodoro_working",
+                data.working_time,
+                "working"
+            );
+        });
     }
-
-    // タイマー表示
-    dispTimer = () => {
-        return timerMsg;
-    }
-
-    // 設定時間取得
-    getCountData = () => {
-        return countData = {
-            workingMin : workingMin,
-            breakMin : breakMin
-        };
-    }
-
-    // 停止後の処理
-    setStopAction = () => {
-        timerMsg = '停止しました。';
-        workingCount = 1;
-        breakCount = 1;
-    }
+});
