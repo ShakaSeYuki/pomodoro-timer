@@ -1,2 +1,4 @@
 img/
 .DS_Store
+.idea/
+.vscode/
