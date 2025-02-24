@@ -35,6 +35,6 @@ Repeat the following (end by pressing "stop" on the popup screen or "Cancel" on 
 2019/09/01 ver.1.0.0  
 2019/09/29 ver.1.0.1(Bug fix)  
 2019/10/20 ver.1.0.2(Design fix)  
-2024/11/27 ver.2.0.0(Update manifest v3)
-2024/11/30 ver.2.0.1(Bug fix)
-2025/02/24 ver.2.0.2(Optimized internal processing)
+2024/11/27 ver.2.0.0(Update manifest v3)  
+2024/11/30 ver.2.0.1(Bug fix)  
+2025/02/24 ver.2.0.2(Optimized internal processing)  
