@@ -1,125 +1,161 @@
+//5分間の再接続処理
 let lifeline;
-let stopId;
-const title = chrome.i18n.getMessage("actionTitle");
-const workNotificationText = chrome.i18n.getMessage("workNotificationText");
 
-async function startAlarm(name, _duration) {
-    await chrome.alarms.create(name, { delayInMinutes: 0.01 });
-}
+chrome.runtime.onConnect.addListener((port) => {
+    if (port.name === 'keepAlive') {
+        lifeline = port;
+        // 切断時の処理
+        port.onDisconnect.addListener(() => keepAlive(true));
+    }
+});
+
+const keepAlive = (forced = false) => {
+    if (lifeline && !forced) return; // すでに接続が存在する場合、再接続しない
+    try {
+        lifeline = chrome.runtime.connect({ name: 'keepAlive' });
+        lifeline.onDisconnect.addListener(() => keepAlive(true));
+    } catch (error) {
+        console.error("keepAlive 接続中にエラーが発生しました:", error);
+    }
+};
 
 //start・stopボタン押された時の処理
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    const workingTime = message.working_time || 25; // 作業時間 (分)
+    const breakTime = message.break_time || 5; // 作業時間 (分)
     if (message.switch === "on") {
-        const workingTime = message.working_time || 25; // 作業時間 (分)
-        const breakTime = message.break_time || 5; // 休憩時間 (分)
         chrome.alarms.create("pomodoro_working", { delayInMinutes: workingTime });
-        chrome.storage.local.set({
-            timerStatus: true,
-            working_time: workingTime,
-            break_time: breakTime,
-            current_phase: "working", // 作業フェーズ
-        });
+        startPomodoroTimer(workingTime, breakTime);
         sendResponse({ status: "タイマーが開始されました" });
-    } else if (message.switch === "stop" || message.switch === "reset") {
+    } else if (message.switch === "stop") {
         chrome.alarms.clearAll(() => {
-            chrome.storage.local.set({ timerStatus: false });
+            stopPomodoroTimer();
             sendResponse({ status: "タイマーが停止されました" });
         });
     }
     return true; // 非同期応答のためにメッセージチャネルを維持
 });
 
-//5分間の再接続処理
-chrome.runtime.onConnect.addListener((port) => {
-    if (port.name === 'keepAlive') {
-        lifeline = port;
-        // 切断時の処理
-        port.onDisconnect.addListener(() => {
-            keepAlive(true);
-        });
-    }
-});
+// タイマーの開始
+let timerInterval;
+let remainingTime = 0;
 
-const keepAlive = (forced = false) => {
-    let lifeline;
-    if (lifeline && !forced) {
-        return; // すでに接続が存在する場合、再接続しない
-    }
-    try {
-        lifeline = chrome.runtime.connect({ name: 'keepAlive' });
-        lifeline.onDisconnect.addListener(() => {
-            keepAlive(true);
+function startPomodoroTimer(workingTime, breakTime) {
+    remainingTime = workingTime * 60;
+    chrome.storage.local.set({
+        timerStatus: true,
+        timer_message: "作業終了まで：",
+        current_phase: "working",
+        working_time: workingTime,
+        break_time: breakTime,
+        remaining_time: remainingTime,
+    });
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(updateTimer, 1000);
+}
+
+// タイマーを1秒ごとに減らす処理
+function updateTimer() {
+    chrome.storage.local.get(["remaining_time"], (data) => {
+        if (data.remaining_time === undefined || data.remaining_time <= 0) {
+            return; // 不正な remaining_time の場合は何もしない
+        }
+
+        if (data.remaining_time <= 1) { // 0になったらフェーズを切り替え
+            switchPhase();
+        } else {
+            remainingTime = data.remaining_time - 1;
+            chrome.storage.local.set({ remaining_time: remainingTime });
+        }
+    });
+}
+
+// フェーズ切り替え処理
+function switchPhase() {
+    chrome.storage.local.get(["working_time", "break_time", "current_phase"], (data) => {
+        clearInterval(timerInterval);
+        timerInterval = null;
+
+        const newPhase = data.current_phase === "working" ? "break" : "working";
+        remainingTime = newPhase === "working" ? data.working_time * 60 : data.break_time * 60;
+        chrome.storage.local.set({
+            current_phase: newPhase,
+            remaining_time: remainingTime,
+            timer_message: newPhase === "working" ? "作業終了まで：" : "休憩終了まで：",
         });
-    } catch (error) {
-        console.error("keepAlive 接続中にエラーが発生しました:", error);
-    }
-};
+
+        showNotification(
+            newPhase === "working"
+                ? "休憩が終了しました。OKボタンを押して作業を開始しましょう。"
+                : "作業が終了しました。OKボタンを押して休憩を開始しましょう。"
+        );
+    });
+}
 
 // 通知を表示する関数
-function showNotification(title, message, alarmName, delayInMinutes, current_phase) {
+function showNotification(message) {
     chrome.notifications.create("pomodoro_timer", {
         type: "basic",
         iconUrl: "/img/icon48.png",
-        title: title,
+        title: "ポモドーロタイマー",
         message: message,
         buttons: [
             { title: "OK" },
-            { title: chrome.i18n.getMessage("finishButton") }
+            { title: "ポモドーロタイマーを終了" }
         ],
         priority: 2,
-    }, (notificationId) => {
+    }, () => {
         if (chrome.runtime.lastError) {
             console.error("通知作成エラー:", chrome.runtime.lastError.message);
-        } else {
-            chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
-                if (notifId === notificationId) {
-                    if (btnIdx === 0) {
-                        // 次のサイクルを開始
-                        chrome.alarms.create(alarmName, { delayInMinutes: delayInMinutes });
-                        chrome.storage.local.set({ current_phase: current_phase });
-                    } else if (btnIdx === 1) {
-                        stopPomodoroTimer();
-                    }
-                }
-            });
         }
+    });
+}
+
+// 通知のボタン処理
+chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
+    if (notifId === "pomodoro_timer") {
+        if (btnIdx === 0) {
+            chrome.storage.local.get(["remaining_time"], (data) => {
+                resumePomodoroTimer(data.remaining_time);
+            });
+        } else if (btnIdx === 1) {
+            console.log("通知からタイマーが停止されました");
+            stopPomodoroTimer();
+        }
+    }
+});
+
+// タイマーの再開（通知後）
+function resumePomodoroTimer(time) {
+    clearInterval(timerInterval); // 既存のタイマーをクリア
+    console.log("タイマーが再開されました");
+    remainingTime = time;
+    // 新しいカウントダウンを開始
+    chrome.storage.local.set({ remaining_time: time }, () => {
+        timerInterval = setInterval(updateTimer, 1000);
     });
 }
 
 // タイマーの停止
 function stopPomodoroTimer() {
-    chrome.alarms.clearAll(() => {
-        console.log("全てのタイマーが停止されました");
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+
+    // 発行済みの通知を削除
+    chrome.notifications.clear("pomodoro_timer", () => {
+        if (chrome.runtime.lastError) {
+            console.error("通知削除エラー:", chrome.runtime.lastError.message);
+        }
     });
+
     chrome.storage.local.set({
         timerStatus: false,
+        timer_message: "STARTを押すと作業開始です。",
         current_phase: null,
-        working_count: 1,
-        break_count: 1,
+        remaining_time: 0,
     });
-}
 
-chrome.alarms.onAlarm.addListener(async (alarm) => {
-    const data = await chrome.storage.local.get(["working_time", "break_time", "current_phase"]);
-    if (alarm.name === "pomodoro_working") {
-        chrome.alarms.clearAll(() => {
-            showNotification(
-                title,
-                chrome.i18n.getMessage("workNotificationText"),
-                "pomodoro_break",
-                data.break_time,
-                "break"
-            );
-        });
-    } else if (alarm.name === "pomodoro_break") {
-        chrome.alarms.clearAll(() => {
-            showNotification(
-                title,
-                chrome.i18n.getMessage("breakNotificationText"),
-                "pomodoro_working",
-                data.working_time,
-                "working"
-            );
-        });
-    }
-});
+    remainingTime = 0;
+}
