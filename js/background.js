@@ -44,7 +44,7 @@ function startPomodoroTimer(workingTime, breakTime) {
     remainingTime = workingTime * 60;
     chrome.storage.local.set({
         timerStatus: true,
-        timer_message: "作業終了まで：",
+        timer_message: chrome.i18n.getMessage("workText"),
         current_phase: "working",
         working_time: workingTime,
         break_time: breakTime,
@@ -81,13 +81,15 @@ function switchPhase() {
         chrome.storage.local.set({
             current_phase: newPhase,
             remaining_time: remainingTime,
-            timer_message: newPhase === "working" ? "作業終了まで：" : "休憩終了まで：",
+            timer_message: newPhase === "working"
+                ? chrome.i18n.getMessage("workText")
+                : chrome.i18n.getMessage("breakText"),
         });
 
         showNotification(
             newPhase === "working"
-                ? "休憩が終了しました。OKボタンを押して作業を開始しましょう。"
-                : "作業が終了しました。OKボタンを押して休憩を開始しましょう。"
+                ? chrome.i18n.getMessage("breakNotificationText")
+                : chrome.i18n.getMessage("workNotificationText")
         );
     });
 }
@@ -97,11 +99,11 @@ function showNotification(message) {
     chrome.notifications.create("pomodoro_timer", {
         type: "basic",
         iconUrl: "/img/icon48.png",
-        title: "ポモドーロタイマー",
+        title: chrome.i18n.getMessage("actionTitle"),
         message: message,
         buttons: [
             { title: "OK" },
-            { title: "ポモドーロタイマーを終了" }
+            { title: chrome.i18n.getMessage("finishButton") }
         ],
         priority: 2,
     }, () => {
@@ -152,7 +154,7 @@ function stopPomodoroTimer() {
 
     chrome.storage.local.set({
         timerStatus: false,
-        timer_message: "STARTを押すと作業開始です。",
+        timer_message: chrome.i18n.getMessage("initMessage"),
         current_phase: null,
         remaining_time: 0,
     });

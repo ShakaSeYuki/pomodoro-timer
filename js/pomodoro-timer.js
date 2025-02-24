@@ -5,7 +5,7 @@ const stopTimer = document.getElementById('pomodoroStop');
 const pomodoroWorking = document.getElementById('pomodoroWorking');
 const pomodoroBreak = document.getElementById('pomodoroBreak');
 
-let timerMsg = "STARTを押すと作業開始です。";
+let timerMsg = chrome.i18n.getMessage("initMessage");
 
 // タイマー表示更新関数
 function updateTimerDisplay() {
@@ -26,9 +26,9 @@ chrome.storage.onChanged.addListener((changes, _namespace) => {
 
 // 初期化時にタイマー表示を呼び出し
 window.addEventListener("DOMContentLoaded", function () {
-    document.getElementById('pomodoroName').innerText = "ポモドーロタイマー";
-    document.getElementById('pomodoroWorkTime').innerText = "作業時間(分)";
-    document.getElementById('pomodoroBreakTime').innerText = "休憩時間(分)";
+    document.getElementById('pomodoroName').innerText = chrome.i18n.getMessage("actionTitle");
+    document.getElementById('pomodoroWorkTime').innerText = chrome.i18n.getMessage("pomodoroWorkTime");
+    document.getElementById('pomodoroBreakTime').innerText = chrome.i18n.getMessage("pomodoroBreakTime");
     chrome.storage.local.get(["working_time", "break_time"], (data) => {
         pomodoroWorking.value = data.working_time ?? 25;
         pomodoroBreak.value = data.break_time ?? 5;
