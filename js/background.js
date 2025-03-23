@@ -32,6 +32,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             stopPomodoroTimer();
             sendResponse({ status: "タイマーが停止されました" });
         });
+    } else if (message.switch === "resume") {
+        chrome.storage.local.get(["remaining_time"], (data) => {
+            resumePomodoroTimer(data.remaining_time);
+        });
     }
     return true; // 非同期応答のためにメッセージチャネルを維持
 });
@@ -96,19 +100,36 @@ function switchPhase() {
 
 // 通知を表示する関数
 function showNotification(message) {
-    chrome.notifications.create("pomodoro_timer", {
-        type: "basic",
-        iconUrl: "/img/icon48.png",
-        title: chrome.i18n.getMessage("actionTitle"),
-        message: message,
-        buttons: [
-            { title: "OK" },
-            { title: chrome.i18n.getMessage("finishButton") }
-        ],
-        priority: 2,
-    }, () => {
-        if (chrome.runtime.lastError) {
-            console.error("通知作成エラー:", chrome.runtime.lastError.message);
+    chrome.storage.local.get("popup_type", (data) => {
+        if (data.popup_type === "alert") {
+            // アクティブなタブにメッセージを送信して `alert()` を実行
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs.length > 0) {
+                    chrome.tabs.sendMessage(tabs[0].id, { type: "alert", message: message }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            console.warn("コンテンツスクリプトが読み込まれていません。", chrome.runtime.lastError.message);
+                        } else {
+                            console.log("アラートメッセージ送信成功:", response);
+                        }
+                    });
+                }
+            });
+        } else {
+            chrome.notifications.create("pomodoro_timer", {
+                type: "basic",
+                iconUrl: "/img/icon48.png",
+                title: chrome.i18n.getMessage("actionTitle"),
+                message: message,
+                buttons: [
+                    { title: "OK" },
+                    { title: chrome.i18n.getMessage("finishButton") }
+                ],
+                priority: 2,
+            }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error("通知作成エラー:", chrome.runtime.lastError.message);
+                }
+            });
         }
     });
 }

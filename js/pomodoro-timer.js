@@ -29,9 +29,15 @@ window.addEventListener("DOMContentLoaded", function () {
     document.getElementById('pomodoroName').innerText = chrome.i18n.getMessage("actionTitle");
     document.getElementById('pomodoroWorkTime').innerText = chrome.i18n.getMessage("pomodoroWorkTime");
     document.getElementById('pomodoroBreakTime').innerText = chrome.i18n.getMessage("pomodoroBreakTime");
-    chrome.storage.local.get(["working_time", "break_time"], (data) => {
+    chrome.storage.local.get(["working_time", "break_time", "popup_type"], (data) => {
         pomodoroWorking.value = data.working_time ?? 25;
         pomodoroBreak.value = data.break_time ?? 5;
+        if (!data.popup_type) {
+            // popup_typeが存在しない場合、デフォルト値を設定
+            chrome.storage.local.set({ popup_type: "notification" }, () => {
+                console.log("popup_type set to default 'notification'");
+            });
+        }
     });
     // 初回のタイマー表示更新
     updateTimerDisplay();

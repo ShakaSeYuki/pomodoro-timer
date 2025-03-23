@@ -6,14 +6,17 @@
 
 h1 {
     text-align: center;
-    background-image: url('/img/icon48.png');
-    background-repeat: no-repeat;
-    background-size: 35px;
-    margin-left: 15px;
+    font-size: 1.8em;
+}
+
+img {
+    width: 35px;
 }
 
 .pomodoro_header {
-    width: 20px;
+    display: flex;
+    align-items: center; /* Vertically align items */
+    gap: 10px; /* Space between h1 and the icon */
 }
 
 .pomodoro_tc {
@@ -65,6 +68,7 @@ h1 {
     -o-transition: 0.2s ease-in-out;
     -moz-transition: 0.2s ease-in-out;
     -webkit-transition: 0.2s ease-in-out;
+    height: 43px;
     width: 40%;
 }
 
@@ -80,4 +84,20 @@ h1 {
 .pomodoro_btn:hover {
     background-color: #999999;
     color: #FFFFFF;
+}
+
+.pomodoro_options {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    font-size: 14px;
+    color: #333;
+    background: #ddd;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.pomodoro_options:hover {
+    background: #bbb;
 }
